@@ -1,0 +1,13 @@
+{
+	"editor.formatOnSave": true,
+	"go.coverOnSave": true,
+	"go.coverageDecorator": {
+		"type": "gutter",
+		"coveredGutterStyle": "slashgreen",
+		"uncoveredGutterStyle": "slashred"
+	},
+	"go.formatTool": "default",
+	"go.lintOnSave": "package",
+	"go.lintTool": "staticcheck",
+	"go.testOnSave": true
+}
