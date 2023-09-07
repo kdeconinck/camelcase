@@ -72,8 +72,8 @@ func (r *rdr) readWord() string {
 
 		return r.input[sIdx:r.pos]
 	} else {
-		if r.pos < len(r.input) && (unicode.IsUpper(r.peekRune())) {
-			for r.pos < len(r.input) && (unicode.IsUpper(r.peekRune())) {
+		if r.pos < len(r.input) && unicode.IsUpper(r.peekRune()) {
+			for r.pos < len(r.input) && unicode.IsUpper(r.peekRune()) {
 				r.readRune()
 			}
 
