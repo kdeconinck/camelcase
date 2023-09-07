@@ -27,8 +27,11 @@
 package camelcase
 
 import (
+	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/kdeconinck/slices"
 )
 
 // A reader designed for reading "CamelCase" strings.
@@ -54,15 +57,25 @@ func (r *rdr) peekRune() rune {
 	return rune(r.input[r.pos])
 }
 
+// Verify if the word that's currently read by r is a word that should NOT be split.
+// If noSplit contains a word that starts with the word that's currently read by r, this function returns true, false
+// otherwise.
+func (r *rdr) isNoSplitWord(sIdx int, noSplit []string) bool {
+	return slices.ContainsFn(noSplit, r.input[sIdx:r.pos+1], func(got, want string) bool {
+		return strings.HasPrefix(got, want)
+	})
+}
+
 // Read the current word from r.
-func (r *rdr) readWord() string {
+// Each word in noSplit (if provided) is treated as a word that shouldn't be split.
+func (r *rdr) readWord(noSplit []string) string {
 	sIdx := r.pos
 
 	r.readRune()
 
 	if unicode.IsDigit(r.rdRune) {
 		if r.pos < len(r.input) && unicode.IsDigit(r.peekRune()) {
-			for r.pos < len(r.input) && unicode.IsDigit(r.peekRune()) {
+			for r.pos < len(r.input) && (unicode.IsDigit(r.peekRune()) || r.isNoSplitWord(sIdx, noSplit)) {
 				r.readRune()
 			}
 
@@ -72,7 +85,7 @@ func (r *rdr) readWord() string {
 		return r.input[sIdx:r.pos]
 	} else {
 		if r.pos < len(r.input) && unicode.IsUpper(r.peekRune()) {
-			for r.pos < len(r.input) && unicode.IsUpper(r.peekRune()) {
+			for r.pos < len(r.input) && (unicode.IsUpper(r.peekRune()) || r.isNoSplitWord(sIdx, noSplit)) {
 				r.readRune()
 			}
 
@@ -83,7 +96,8 @@ func (r *rdr) readWord() string {
 			return r.input[sIdx:r.pos]
 		}
 
-		for r.pos < len(r.input) && (!unicode.IsUpper(r.peekRune()) && !unicode.IsDigit(r.peekRune())) {
+		for r.pos < len(r.input) && (r.isNoSplitWord(sIdx, noSplit) ||
+			(!unicode.IsUpper(r.peekRune()) && !unicode.IsDigit(r.peekRune()))) {
 			r.readRune()
 		}
 
@@ -93,7 +107,8 @@ func (r *rdr) readWord() string {
 
 // Split reads v treating it as a "CamelCase" and returns the different words.
 // If v isn't a valid UTF-8 string, or when v is an empty string, a slice with one element (v) is returned.
-func Split(v string) []string {
+// Each word in noSplit (if provided) is treated as a word that shouldn't be split.
+func Split(v string, noSplit ...string) []string {
 	if !utf8.ValidString(v) || len(v) == 0 {
 		return []string{v}
 	}
@@ -102,7 +117,7 @@ func Split(v string) []string {
 	retVal := make([]string, 0)
 
 	for vRdr.pos < len(v) {
-		retVal = append(retVal, vRdr.readWord())
+		retVal = append(retVal, vRdr.readWord(noSplit))
 	}
 
 	return retVal

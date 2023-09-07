@@ -1,2 +1,4 @@
 github.com/kdeconinck/assert v1.0.0 h1:pZyFY1O4pjPsV0lfshOuaGRqXVLpPr5/Me9YOsQq5ms=
 github.com/kdeconinck/assert v1.0.0/go.mod h1:021kfFnTy4kd9c75aqGoA1g7ZlPyXkNcoMrutA+alKw=
+github.com/kdeconinck/slices v0.0.0-20230907084659-450b4d5f23dc h1:CFEiPxEsJqyzPUxZ9m47u5KDRM8O0QnpFVM4JU1iJEg=
+github.com/kdeconinck/slices v0.0.0-20230907084659-450b4d5f23dc/go.mod h1:MaJZscmmuD0FnNK4kmx6vFiwF3a5TfyHGOAnFwxYRag=

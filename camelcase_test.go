@@ -37,8 +37,9 @@ import (
 // UT: Split a "CamelCase" word into a slice of words.
 func TestSplit(t *testing.T) {
 	for _, tc := range []struct {
-		vInput string
-		want   []string
+		vInput   string
+		vNoSplit []string
+		want     []string
 	}{
 		{
 			vInput: "",
@@ -81,12 +82,17 @@ func TestSplit(t *testing.T) {
 			want:   []string{"5", "May", "2000"},
 		},
 		{
+			vInput:   "1Tls2IsUsedInHttpCommunicationAndIsSecure",
+			vNoSplit: []string{"Tls2", "HttpCommunication"},
+			want:     []string{"1", "Tls2", "Is", "Used", "In", "HttpCommunication", "And", "Is", "Secure"},
+		},
+		{
 			vInput: "BadUTF8\xe2\xe2\xa1",
 			want:   []string{"BadUTF8\xe2\xe2\xa1"},
 		},
 	} {
 		// ACT.
-		got := camelcase.Split(tc.vInput)
+		got := camelcase.Split(tc.vInput, tc.vNoSplit...)
 
 		// ASSERT.
 		assert.EqualS(t, got, tc.want, "", "\n\n"+
