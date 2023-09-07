@@ -55,7 +55,6 @@ func (r *rdr) peekRune() rune {
 }
 
 // Read the current word from r.
-// The word is considered terminated as soon as the reader encounters a new uppercase character.
 func (r *rdr) readWord() string {
 	sIdx := r.pos
 
