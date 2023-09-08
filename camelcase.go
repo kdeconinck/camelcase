@@ -34,27 +34,47 @@ import (
 	"github.com/kdeconinck/slices"
 )
 
+// Holds information about a single rune.
+type runeInfo struct {
+	r rune
+}
+
+// Checks whether or not the rune represented by rInfo is a digit.
+func (rInfo *runeInfo) isDigit() bool {
+	return unicode.IsDigit(rInfo.r)
+}
+
+// Checks whether or not the rune represented by rInfo is an uppercase rune.
+func (rInfo *runeInfo) isUppercase() bool {
+	return unicode.IsUpper(rInfo.r)
+}
+
 // A reader designed for reading "CamelCase" strings.
 type rdr struct {
-	input  string // The data this reader operates on.
-	pos    int    // The position of this reader.
-	rdRune rune   // The last rune that was read.
+	input       string   // The data this reader operates on.
+	pos         int      // The position of this reader.
+	hasNextRune bool     // A flag indicating if there's a next rune.
+	rdRune      runeInfo // Information about the last rune that was read.
+	nxtRune     runeInfo // Information about the next rune that's about to be read.
 }
 
 // Read the next rune from r.
 func (r *rdr) readRune() {
-	r.rdRune = rune(r.input[r.pos])
+	r.rdRune = runeInfo{rune(r.input[r.pos])}
 	r.pos = r.pos + 1
+	r.hasNextRune = r.pos < len(r.input)
+
+	if r.hasNextRune {
+		r.nxtRune = runeInfo{rune(r.input[r.pos])}
+	}
 }
 
 // Undo the last rune from r.
 func (r *rdr) unreadRune() {
 	r.pos = r.pos - 1
-}
-
-// Peek at the next rune from r without advancing the reader.
-func (r *rdr) peekRune() rune {
-	return rune(r.input[r.pos])
+	r.nxtRune = r.rdRune
+	r.rdRune = runeInfo{rune(r.input[r.pos])}
+	r.hasNextRune = true // NOTE: An undo operation means that there will be always a next rune.
 }
 
 // Verify if the word that's currently read by r is a word that should NOT be split.
@@ -73,9 +93,9 @@ func (r *rdr) readWord(noSplit []string) string {
 
 	r.readRune()
 
-	if unicode.IsDigit(r.rdRune) {
-		if r.pos < len(r.input) && unicode.IsDigit(r.peekRune()) {
-			for r.pos < len(r.input) && (unicode.IsDigit(r.peekRune()) || r.isNoSplitWord(sIdx, noSplit)) {
+	if r.rdRune.isDigit() {
+		if r.hasNextRune && r.nxtRune.isDigit() {
+			for r.hasNextRune && (r.nxtRune.isDigit() || r.isNoSplitWord(sIdx, noSplit)) {
 				r.readRune()
 			}
 
@@ -84,20 +104,19 @@ func (r *rdr) readWord(noSplit []string) string {
 
 		return r.input[sIdx:r.pos]
 	} else {
-		if r.pos < len(r.input) && unicode.IsUpper(r.peekRune()) {
-			for r.pos < len(r.input) && (unicode.IsUpper(r.peekRune()) || r.isNoSplitWord(sIdx, noSplit)) {
+		if r.hasNextRune && r.nxtRune.isUppercase() {
+			for r.hasNextRune && (r.nxtRune.isUppercase() || r.isNoSplitWord(sIdx, noSplit)) {
 				r.readRune()
 			}
 
-			if r.pos < len(r.input) && (!unicode.IsUpper(r.peekRune()) && !unicode.IsDigit(r.peekRune())) {
+			if r.hasNextRune && (!r.nxtRune.isUppercase() && !r.nxtRune.isDigit()) {
 				r.unreadRune()
 			}
 
 			return r.input[sIdx:r.pos]
 		}
 
-		for r.pos < len(r.input) && (r.isNoSplitWord(sIdx, noSplit) ||
-			(!unicode.IsUpper(r.peekRune()) && !unicode.IsDigit(r.peekRune()))) {
+		for r.hasNextRune && (r.isNoSplitWord(sIdx, noSplit) || (!r.nxtRune.isUppercase() && !r.nxtRune.isDigit())) {
 			r.readRune()
 		}
 

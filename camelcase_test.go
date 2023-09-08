@@ -108,7 +108,7 @@ func BenchmarkSplit(b *testing.B) {
 	// ARRANGE.
 	var s strings.Builder
 
-	for i := 0; i < 1_000_000; i++ {
+	for i := 0; i < 1_000; i++ {
 		s.WriteString("HelloWorld99HTML")
 	}
 
