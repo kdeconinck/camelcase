@@ -86,42 +86,52 @@ func (r *rdr) isNoSplitWord(sIdx int, noSplit []string) bool {
 	})
 }
 
-// Read the current word from r.
+// Read the next part from r.
 // Each word in noSplit (if provided) is treated as a word that shouldn't be split.
-func (r *rdr) readWord(noSplit []string) string {
+func (r *rdr) readNextPart(noSplit []string) string {
 	sIdx := r.pos
 
 	r.readRune()
 
 	if r.rdRune.isDigit() {
-		if r.hasNextRune && r.nxtRune.isDigit() {
-			for r.hasNextRune && (r.nxtRune.isDigit() || r.isNoSplitWord(sIdx, noSplit)) {
-				r.readRune()
-			}
+		return r.readNumber(sIdx, noSplit)
+	}
 
-			return r.input[sIdx:r.pos]
-		}
+	return r.readWord(sIdx, noSplit)
+}
 
-		return r.input[sIdx:r.pos]
-	} else {
-		if r.hasNextRune && r.nxtRune.isUppercase() {
-			for r.hasNextRune && (r.nxtRune.isUppercase() || r.isNoSplitWord(sIdx, noSplit)) {
-				r.readRune()
-			}
-
-			if r.hasNextRune && (!r.nxtRune.isUppercase() && !r.nxtRune.isDigit()) {
-				r.unreadRune()
-			}
-
-			return r.input[sIdx:r.pos]
-		}
-
-		for r.hasNextRune && (r.isNoSplitWord(sIdx, noSplit) || (!r.nxtRune.isUppercase() && !r.nxtRune.isDigit())) {
+// Read and return a number from r.
+func (r *rdr) readNumber(sIdx int, noSplit []string) string {
+	if r.hasNextRune && r.nxtRune.isDigit() {
+		for r.hasNextRune && (r.nxtRune.isDigit() || r.isNoSplitWord(sIdx, noSplit)) {
 			r.readRune()
 		}
 
 		return r.input[sIdx:r.pos]
 	}
+
+	return r.input[sIdx:r.pos]
+}
+
+// Read and return a word from r.
+func (r *rdr) readWord(sIdx int, noSplit []string) string {
+	if r.hasNextRune && r.nxtRune.isUppercase() {
+		for r.hasNextRune && (r.nxtRune.isUppercase() || r.isNoSplitWord(sIdx, noSplit)) {
+			r.readRune()
+		}
+
+		if r.hasNextRune && (!r.nxtRune.isUppercase() && !r.nxtRune.isDigit()) {
+			r.unreadRune()
+		}
+
+		return r.input[sIdx:r.pos]
+	}
+
+	for r.hasNextRune && (r.isNoSplitWord(sIdx, noSplit) || (!r.nxtRune.isUppercase() && !r.nxtRune.isDigit())) {
+		r.readRune()
+	}
+
+	return r.input[sIdx:r.pos]
 }
 
 // Split reads v treating it as a "CamelCase" and returns the different words.
@@ -136,7 +146,7 @@ func Split(v string, noSplit ...string) []string {
 	retVal := make([]string, 0)
 
 	for vRdr.pos < len(v) {
-		retVal = append(retVal, vRdr.readWord(noSplit))
+		retVal = append(retVal, vRdr.readNextPart(noSplit))
 	}
 
 	return retVal
